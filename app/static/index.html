@@ -206,7 +206,7 @@ async function login() {
     localStorage.setItem('memoryd_token', TOKEN);
     document.body.classList.remove('locked');
     $('whoami').innerHTML = `<span class="ok">✓ ${ME.name}（设备${ME.device_id} · ${ME.role}）</span>`;
-    refreshAll();
+    loadActiveTab();
   } catch (e) {
     $('login-err').textContent = '登录失败：token 无效或服务不可达';
     TOKEN = '';
@@ -230,21 +230,33 @@ function logout(msg) {
   api('/v1/auth/whoami').then(me => {
     ME = me;
     $('whoami').innerHTML = `<span class="ok">✓ ${ME.name}（设备${ME.device_id} · ${ME.role}）</span>`;
-    refreshAll();
+    loadActiveTab();
   }).catch(e => {
     // 401 时 api() 已调用 logout() 重新锁定；这里是网络等其他错误
     if (TOKEN) $('whoami').innerHTML = '<span class="dim">连接失败，服务不可达（数据未加载）</span>';
   });
 })();
 
+/* 懒加载：每个 tab 只在切换到它时才请求自己的数据 */
+const TAB_LOADERS = {
+  mem: () => { loadStats(); loadMem(); },
+  proposals: loadProposals,
+  dev: loadDev,
+  audit: loadAudit,
+  // search：输入关键词点检索才请求
+};
+let ACTIVE_TAB = 'mem';
+
 function showTab(name) {
+  ACTIVE_TAB = name;
   document.querySelectorAll('section').forEach(s => s.classList.remove('show'));
   $('tab-' + name).classList.add('show');
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('on'));
   $('nav-' + name).classList.add('on');
+  (TAB_LOADERS[name] || (() => {}))();   // 切到才加载
 }
 
-function refreshAll() { loadStats(); loadMem(); loadDev(); loadAudit(); loadProposals(); }
+function loadActiveTab() { (TAB_LOADERS[ACTIVE_TAB] || (() => {}))(); }
 
 /* ---- modal ---- */
 function openModal(html) { $('modal').innerHTML = html; $('overlay').classList.add('show'); }
@@ -261,15 +273,22 @@ async function loadStats() {
     } catch (e) {}
     let pending = 0;
     try { pending = (await api('/v1/proposals?status=pending')).count; } catch (e) {}
-    const badge = $('prop-badge');
-    badge.style.display = pending ? 'inline-block' : 'none';
-    badge.textContent = pending;
     $('stats').innerHTML = `
       <div class="stat"><b>${r.devices}</b><span>设备</span></div>
       <div class="stat"><b>${r.memories}</b><span>活跃记忆</span></div>
       ${Object.entries(counts).map(([s, n]) =>
         `<div class="stat"><b>${n}</b><span class="badge b-${s}">${s}</span></div>`).join('')}
       ${pending ? `<div class="stat"><b>${pending}</b><span class="badge b-pending">待审批</span></div>` : ''}`;
+    updatePendingBadge(pending);
+  } catch (e) {}
+}
+
+async function updatePendingBadge(n) {
+  try {
+    if (n === undefined) n = (await api('/v1/proposals?status=pending')).count;
+    const badge = $('prop-badge');
+    badge.style.display = n ? 'inline-block' : 'none';
+    badge.textContent = n;
   } catch (e) {}
 }
 
@@ -464,7 +483,7 @@ async function loadProposals() {
 async function decideProposal(id, act) {
   try {
     await api(`/v1/proposals/${id}:${act}`, { method: 'POST', body: JSON.stringify({ note: '管理台' + (act === 'approve' ? '审批通过' : '拒绝') }) });
-    loadProposals(); loadStats(); loadMem(); loadDev();
+    loadProposals(); updatePendingBadge();
   } catch (e) { alert('操作失败：' + e.message); }
 }
 
@@ -524,7 +543,7 @@ async function doRegister() {
         <button onclick="navigator.clipboard.writeText('${esc(r.token)}').then(()=>alert('已复制'))">复制 token</button>
         <button class="primary" onclick="closeModal();loadDev()">完成</button>
       </div>`);
-    loadDev(); loadStats();
+    loadDev();
   } catch (e) { alert('注册失败：' + e.message); }
 }
 
