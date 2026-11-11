@@ -5,8 +5,9 @@
 **Self-hosted, cross-device long-term memory for LLM agents.**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![docker](https://github.com/OWNER/memoryd/actions/workflows/docker.yml/badge.svg)](https://github.com/OWNER/memoryd/actions/workflows/docker.yml)
-[![Docker](https://img.shields.io/badge/ghcr.io-OWNER%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://github.com/OWNER/memoryd/pkgs/container/memoryd)
+[![docker](https://github.com/kingc0000/memoryd/actions/workflows/docker.yml/badge.svg)](https://github.com/kingc0000/memoryd/actions/workflows/docker.yml)
+[![Docker](https://img.shields.io/badge/ghcr.io-kingc0000%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://github.com/kingc0000/memoryd/pkgs/container/memoryd)
+[![Docker Hub](https://img.shields.io/badge/docker.io-mejeor%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/mejeor/memoryd)
 
 FastAPI · SQLite (FTS5 + jieba BM25) · Bearer device tokens · server-side LLM extraction & dedup · web admin console · [DeepSeek Harness plugin](dsh-plugin/)
 
@@ -76,7 +77,7 @@ Promotion (`device` → `user`/`project`) and project membership are **admin-app
 ### Docker
 
 ```bash
-git clone https://github.com/OWNER/memoryd.git && cd memoryd
+git clone https://github.com/kingc0000/memoryd.git && cd memoryd
 export LLM_API_KEY=sk-...          # any OpenAI-compatible key
 docker compose up -d               # → http://127.0.0.1:3233
 ```

@@ -5,8 +5,9 @@
 **自托管、跨设备的 LLM Agent 长期记忆服务。**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![docker](https://github.com/OWNER/memoryd/actions/workflows/docker.yml/badge.svg)](https://github.com/OWNER/memoryd/actions/workflows/docker.yml)
-[![Docker](https://img.shields.io/badge/ghcr.io-OWNER%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://github.com/OWNER/memoryd/pkgs/container/memoryd)
+[![docker](https://github.com/kingc0000/memoryd/actions/workflows/docker.yml/badge.svg)](https://github.com/kingc0000/memoryd/actions/workflows/docker.yml)
+[![Docker](https://img.shields.io/badge/ghcr.io-kingc0000%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://github.com/kingc0000/memoryd/pkgs/container/memoryd)
+[![Docker Hub](https://img.shields.io/badge/docker.io-mejeor%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/mejeor/memoryd)
 
 FastAPI · SQLite（FTS5 + jieba BM25）· Bearer 设备 token · 服务端 LLM 提取与去重 · Web 管理台 · [DeepSeek Harness 插件](dsh-plugin/README_ZH.md)
 
@@ -76,7 +77,7 @@ DSH 插件 / CLI / 任意客户端          （Bearer 设备 token）
 ### Docker
 
 ```bash
-git clone https://github.com/OWNER/memoryd.git && cd memoryd
+git clone https://github.com/kingc0000/memoryd.git && cd memoryd
 export LLM_API_KEY=sk-...          # 任意 OpenAI 兼容 key
 docker compose up -d               # → http://127.0.0.1:3233
 ```
