@@ -34,7 +34,10 @@ Extraction and dedup live on the **server**, so every client (not just DSH) shar
 - A running memoryd service (self-hosted; see the memoryd repo for deployment).
 - DeepSeek Harness `0.1.7-rc.2`, `0.2.0-rc.2`, `0.2.1-alpha.2`, or `0.2.1-alpha.4`.
 - Node.js `^22.19.0` or `>=24.0.0`, matching the current DSH engine range.
-- A device token issued by the memoryd admin (`POST /v1/devices`). The token identifies this DSH instance as one device; memoryd isolates device-private memories by device id.
+- A memoryd device token. Two ways to get one:
+  - self-registration (recommended): `python3 scripts/register_device.py --name <device-name> --endpoint <service-url> --wait` — the agent submits a request with a persistent fingerprint, an admin approves it in the console, and the one-time token is claimed automatically;
+  - or issued by the admin (`POST /v1/devices`).
+  The token identifies this DSH instance as one device; memoryd isolates device-private memories by device id.
 
 ## 3. Install
 

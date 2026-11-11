@@ -77,6 +77,21 @@ CREATE TABLE IF NOT EXISTS audit_log(
   detail TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS registration_requests(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,                           -- agent 自报设备名
+  fingerprint TEXT NOT NULL,                    -- agent 侧持久化的随机指纹（领取凭证）
+  note TEXT,                                    -- 备注（如机器信息/用途）
+  status TEXT NOT NULL DEFAULT 'pending',       -- pending | approved | rejected | issued
+  device_id INTEGER,                            -- 批准后关联的设备 id
+  issued_token TEXT,                            -- 批准后暂存的一次性 token（领取后清空）
+  created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  decided_at TEXT,
+  decided_by INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_reg_status ON registration_requests(status, id);
+CREATE INDEX IF NOT EXISTS idx_reg_fp ON registration_requests(fingerprint);
 """
 
 _db_local = threading.local()

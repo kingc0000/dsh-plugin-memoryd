@@ -167,6 +167,7 @@
     <button class="primary" onclick="uiRegisterDevice()">＋ 注册新设备（签发 token）</button>
     <span class="hint">仅 admin。token 只显示一次；可轮换（旧立即失效）/ 吊销 / 停用。</span>
   </div>
+  <div id="reg-reqs"></div>
   <div id="dev-body"></div>
   <div id="dev-pager"></div>
 </section>
@@ -566,7 +567,42 @@ async function loadDev() {
           '<span class="hint">仅 admin</span>'}
         </td>
       </tr>`).join('') + '</tbody></table>';
+    if (ME.role === 'admin') loadRegReqs(); else $('reg-reqs').innerHTML = '';
   } catch (e) { $('dev-body').innerHTML = `<div class="hint">${esc(e.message)}（非 admin token 不可见）</div>`; }
+}
+
+/* ---- 设备自助注册请求（审批流）---- */
+async function loadRegReqs() {
+  try {
+    const r = await api('/v1/registrations?status=pending&limit=20');
+    if (!r.results.length) {
+      $('reg-reqs').innerHTML = r.total ? '<div class="hint" style="margin:8px 0">无待审注册请求</div>' : '';
+      return;
+    }
+    $('reg-reqs').innerHTML = `<div class="proposal" style="margin:8px 0">
+      <div class="p-head"><b>待审注册请求（${r.total}）</b><span class="dim">agent 自助提交，批准后对方凭指纹领取 token</span></div>` +
+      r.results.map(q => `
+      <div class="proposal" style="margin:6px 0">
+        <div class="p-head">
+          <b>${esc(q.name)}</b>
+          <span class="badge b-pending">pending</span>
+          <span class="dim" style="margin-left:auto">${(q.created_at || '').slice(0, 16)}</span>
+        </div>
+        ${q.note ? `<div class="p-reason">备注：${esc(q.note)}</div>` : ''}
+        <div class="row" style="margin:8px 0 0">
+          <button class="mini primary" onclick="decideReg(${q.id},'approve')">✓ 批准并签发</button>
+          <button class="mini danger" onclick="decideReg(${q.id},'reject')">✗ 拒绝</button>
+        </div>
+      </div>`).join('') + '</div>';
+  } catch (e) { $('reg-reqs').innerHTML = ''; }
+}
+
+async function decideReg(id, act) {
+  try {
+    const r = await api(`/v1/registrations/${id}:${act}`, { method: 'POST' });
+    if (act === 'approve') alert(r.detail || '已批准，等待对方凭指纹领取 token');
+    loadDev();
+  } catch (e) { alert('操作失败：' + e.message); }
 }
 
 function uiRegisterDevice() {

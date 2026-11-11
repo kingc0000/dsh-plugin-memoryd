@@ -107,19 +107,23 @@ uvicorn app.main:app --host 127.0.0.1 --port 3233
 
 TLS reverse-proxy templates ship in `nginx-memoryd.conf.example` (Let's Encrypt) and `nginx-memoryd-selfsigned.conf.example`. **Do not expose the bare port** — put TLS in front.
 
-### First admin, first device
+### First admin, onboarding new devices
 
 ```bash
-# 1. create the admin device (token is shown exactly once)
-python scripts/register_device.py --name admin --role admin
-#    → token: Xk9-EXAMPLE... (save it; the server stores only a hash)
+# 1. bootstrap the first admin device (local DB insert; token is shown exactly once)
+python scripts/init_admin.py --name admin
+#    → TOKEN: Xk9-EXAMPLE... (save it; the server stores only a hash)
 
 # 2. open the admin console
 open http://127.0.0.1:3233/ui/    # paste the token to log in
-#    tabs: 记忆 CRUD · 检索 · 审批 (proposals) · 设备与 Token · 审计
+#    tabs: memories · search · proposals · Devices & Tokens · audit
 
-# 3. register each client device the same way (role=device)
-#    hand the token to that device's plugin config
+# 3. onboard a new device/agent — two ways
+#    a) agent self-registration (recommended): the agent runs one command, an admin approves
+python scripts/register_device.py --name my-agent --endpoint https://<host> --wait
+#       generates a persistent fingerprint → submits a registration request → (admin approves)
+#       → claims the one-time token; pending requests appear on the Devices tab for approve/reject
+#    b) admin creates it manually: Devices tab → register new device (direct token issue)
 ```
 
 ### DeepSeek Harness plugin

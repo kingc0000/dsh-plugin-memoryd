@@ -102,3 +102,14 @@ class LLMAdjudicate(BaseModel):
     confidence: float = 0.6
     matches: list[int] = []
     reason: str = ""
+
+class RegisterBody(BaseModel):
+    """匿名注册请求：agent 自报名字 + 本地指纹。"""
+    name: str = Field(min_length=1, max_length=64)
+    fingerprint: str = Field(min_length=16, max_length=128)
+    note: str = Field(default="", max_length=500)
+
+
+class RegisterClaimBody(BaseModel):
+    """凭指纹领取 token。"""
+    fingerprint: str = Field(min_length=16, max_length=128)

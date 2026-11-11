@@ -34,7 +34,10 @@
 - 一个运行中的 memoryd 服务（自托管，部署见 memoryd 仓库）。
 - DeepSeek Harness `0.1.7-rc.2`、`0.2.0-rc.2`、`0.2.1-alpha.2` 或 `0.2.1-alpha.4`。
 - Node.js `^22.19.0` 或 `>=24.0.0`（与当前 DSH 引擎范围一致）。
-- memoryd admin 签发的设备 token（`POST /v1/devices`）。token 把这个 DSH 实例标识为一台设备；memoryd 按设备 id 隔离各设备的私有记忆。
+- memoryd 设备 token。获取方式二选一：
+  - 自助注册（推荐）：`python3 scripts/register_device.py --name <设备名> --endpoint <服务地址> --wait`，等 admin 在管理台批准后自动领取一次性 token；
+  - 或由 admin 签发（`POST /v1/devices`）。
+  token 把这个 DSH 实例标识为一台设备；memoryd 按设备 id 隔离各设备的私有记忆。
 
 ## 3. 安装
 

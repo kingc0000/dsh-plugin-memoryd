@@ -107,19 +107,23 @@ uvicorn app.main:app --host 127.0.0.1 --port 3233
 
 TLS 反代模板随仓库附带：`nginx-memoryd.conf.example`（Let's Encrypt）与 `nginx-memoryd-selfsigned.conf.example`（自签）。**不要裸暴露端口**——前面加 TLS。
 
-### 首个管理员、首台设备
+### 首个管理员、新设备接入
 
 ```bash
-# 1. 注册 admin 设备（token 只显示这一次）
-python scripts/register_device.py --name admin --role admin
-#    → token: Xk9-EXAMPLE...（保存好；服务端只存哈希）
+# 1. 初始化首个 admin（本地直插 DB，token 只显示这一次）
+python scripts/init_admin.py --name admin
+#    → TOKEN: Xk9-EXAMPLE...（保存好；服务端只存哈希）
 
 # 2. 打开管理台
 open http://127.0.0.1:3233/ui/    # 粘贴 token 登录
 #    标签页：记忆 CRUD · 检索 · 审批 · 设备与 Token · 审计
 
-# 3. 每台客户端设备同样方式注册（role=device）
-#    把 token 填进该设备的插件配置
+# 3. 新设备/新 agent 接入（两种方式）
+#    a) agent 自助注册（推荐）：agent 侧跑一条命令，admin 在管理台批准
+python scripts/register_device.py --name my-agent --endpoint https://<host> --wait
+#       生成持久化指纹 → 提交注册请求 →（admin 批准）→ 领取一次性 token
+#       待审请求出现在管理台「设备与 Token」页顶部，批准/拒绝即可
+#    b) admin 手动创建：管理台「设备与 Token」→ 注册新设备（直接签发）
 ```
 
 ### DeepSeek Harness 插件
