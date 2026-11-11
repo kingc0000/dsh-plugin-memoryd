@@ -136,7 +136,7 @@ Full docs in [`dsh-plugin/`](dsh-plugin/README.md). The plugin registers four to
         memorydMemory: true
       config:
         - id: memoryd-memory
-          name: "@agentscope-ai/dsh-plugin-memoryd"
+          name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
             apiKey: <device-token>

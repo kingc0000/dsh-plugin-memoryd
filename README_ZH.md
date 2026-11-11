@@ -136,7 +136,7 @@ open http://127.0.0.1:3233/ui/    # 粘贴 token 登录
         memorydMemory: true
       config:
         - id: memoryd-memory
-          name: "@agentscope-ai/dsh-plugin-memoryd"
+          name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
             apiKey: <设备token>

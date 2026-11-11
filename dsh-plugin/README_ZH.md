@@ -2,7 +2,7 @@
 
 [English guide](./README.md)
 
-本指南说明如何安装、配置和使用 `@agentscope-ai/memoryd-dsh-plugin`：指令注入、四个记忆工具、对话自动捕获，以及 scope 模型（跨设备共享区 + 设备私有隔离区）。
+本指南说明如何安装、配置和使用 `dsh-plugin-memoryd`：指令注入、四个记忆工具、对话自动捕获，以及 scope 模型（跨设备共享区 + 设备私有隔离区）。
 
 ## 1. 插件工作机制
 
@@ -50,7 +50,7 @@
         memorydMemory: true
       config:
         - id: memoryd-memory
-          name: "@agentscope-ai/memoryd-dsh-plugin"
+          name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
             apiKey: <设备token>   # 或环境变量 MEMORYD_API_KEY

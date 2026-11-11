@@ -6,4 +6,4 @@
         memorydMemory: true
       config:
         - id: memoryd-memory
-          name: "@agentscope-ai/dsh-plugin-memoryd"
+          name: "dsh-plugin-memoryd"

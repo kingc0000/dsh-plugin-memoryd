@@ -1,5 +1,5 @@
 {
-  "name": "@agentscope-ai/dsh-plugin-memoryd",
+  "name": "dsh-plugin-memoryd",
   "version": "0.2.0",
   "description": "memoryd cross-device long-term memory for DeepSeek Harness (shared + device-isolated zones)",
   "type": "module",
@@ -65,7 +65,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agentscope-ai/memoryd.git",
+    "url": "git+https://github.com/kingc0000/dsh-plugin-memoryd.git",
     "directory": "dsh-plugin"
   },
   "keywords": [

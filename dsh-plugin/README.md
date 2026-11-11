@@ -2,7 +2,7 @@
 
 [中文说明](./README_ZH.md)
 
-This guide explains how to install, configure, and use `@agentscope-ai/memoryd-dsh-plugin` with DeepSeek Harness (DSH): guidance injection, the four memory tools, automatic conversation capture, and the scope model (shared vs. device-isolated zones).
+This guide explains how to install, configure, and use `dsh-plugin-memoryd` with DeepSeek Harness (DSH): guidance injection, the four memory tools, automatic conversation capture, and the scope model (shared vs. device-isolated zones).
 
 ## 1. How the plugin works
 
@@ -50,7 +50,7 @@ Add the plugin to your DSH profile:
         memorydMemory: true
       config:
         - id: memoryd-memory
-          name: "@agentscope-ai/memoryd-dsh-plugin"
+          name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
             apiKey: <device-token>   # or env MEMORYD_API_KEY
