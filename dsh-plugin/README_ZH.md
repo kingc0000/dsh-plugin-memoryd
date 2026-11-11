@@ -56,7 +56,9 @@
           name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
-            apiKey: <设备token>   # 或环境变量 MEMORYD_API_KEY
+            # apiKey 可省略：不填时插件自动注册（生成持久化指纹并提交），
+            # admin 在管理台批准后自动领取一次性 token（存 ~/.memoryd/token）
+            apiKey: <设备token>   # 显式配置则优先；或环境变量 MEMORYD_API_KEY
             language: zh
             searchLimit: 8
 ```
@@ -68,7 +70,12 @@
 | 配置 | 默认值 | 说明 |
 |---|---|---|
 | `endpoint` | `http://127.0.0.1:3233` | memoryd 服务地址 |
-| `apiKey` | `""` | 设备 token；未配置时回退环境变量 `MEMORYD_API_KEY` |
+| `apiKey` | `""` | 设备 token；未配置时回退环境变量 `MEMORYD_API_KEY`，仍无则触发自动注册 |
+| `autoRegister` | `true` | 无 token 时自动注册（指纹 + 轮询审批），批准后自动领取 |
+| `deviceName` | 主机名 | 自动注册时的设备名 |
+| `tokenFile` | `~/.memoryd/token` | 领取的 token 持久化文件（600 权限） |
+| `fingerprintFile` | `~/.memoryd/fingerprint` | 注册指纹持久化文件 |
+| `registrationPollMs` | `5000` | 等待审批的轮询间隔（毫秒） |
 | `requestTimeoutMs` | `10000` | 请求超时（ingest 用 60 秒）|
 | `searchLimit` | `8` | `memory_search` 默认返回条数 |
 | `autoMemoryEnabled` | `true` | 自动捕获开关 |

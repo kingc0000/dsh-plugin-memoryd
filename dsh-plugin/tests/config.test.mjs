@@ -1,10 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import os from "node:os";
 import { DEFAULT_CONFIG, resolveConfig } from "../dist/config.js";
 
 test("resolveConfig returns defaults for empty input", () => {
   const cfg = resolveConfig({}, {});
-  assert.deepEqual(cfg, { ...DEFAULT_CONFIG, apiKey: "" });
+  assert.equal(cfg.apiKey, "");
+  assert.equal(cfg.deviceName, os.hostname());
+  assert.match(cfg.tokenFile, /\.memoryd[\\/]token$/);
+  assert.match(cfg.fingerprintFile, /\.memoryd[\\/]fingerprint$/);
+  assert.equal(cfg.registrationPollMs, 5000);
+  assert.equal(cfg.autoRegister, true);
 });
 
 test("resolveConfig reads env MEMORYD_API_KEY as fallback", () => {

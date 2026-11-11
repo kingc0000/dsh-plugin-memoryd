@@ -5,6 +5,7 @@ import { resolveConfig, Config, type MemorydPluginConfig } from "./config.js";
 import { hasGuidance, memoryGuidance, PLUGIN_SOURCE } from "./guidance.js";
 import { MemorydRuntime } from "./runtime.js";
 import { registerMemorydTools } from "./tools.js";
+import { TokenStore } from "./token.js";
 
 export const name = "memoryd-memory";
 export const inject = ["agents", "sessions", "tools"];
@@ -31,7 +32,12 @@ interface MemorydConfigInput {
 export function apply(ctx: PluginContext, input: MemorydConfigInput = {}): void {
   let config: MemorydPluginConfig = resolveConfig(input as Record<string, unknown>);
   const current = () => config;
-  const client = new MemorydClient(current);
+  const tokenStore = new TokenStore(current, fetch, ctx.logger);
+  const client = new MemorydClient(() => ({
+    endpoint: current().endpoint,
+    apiKey: tokenStore.resolve(),
+    requestTimeoutMs: current().requestTimeoutMs,
+  }));
   const runtime = new MemorydRuntime(client, current, ctx.logger);
 
   ctx.provide("memorydMemory", runtime);
@@ -39,8 +45,12 @@ export function apply(ctx: PluginContext, input: MemorydConfigInput = {}): void 
   ctx.effect(() => registerMemorydTools(ctx as never, client, current), "memorydMemory.tools()");
 
   ctx.effect(() => {
+    tokenStore.start();
     runtime.start();
-    return () => runtime.disposeAll();
+    return () => {
+      tokenStore.dispose();
+      runtime.disposeAll();
+    };
   }, "memorydMemory.lifecycle()");
 
   ctx.on("loader/volatile-update", () => {

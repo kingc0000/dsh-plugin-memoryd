@@ -1,4 +1,6 @@
 /** 配置解析：默认值 + schemastery schema + 环境变量兜底。 */
+import os from "node:os";
+import Path from "node:path";
 import z from "@deepseek-ai/schemastery";
 
 export const DEFAULT_CONFIG = Object.freeze({
@@ -10,6 +12,11 @@ export const DEFAULT_CONFIG = Object.freeze({
   autoMemoryInterval: 5,
   rootAgentsOnly: false,
   language: "zh",
+  autoRegister: true,
+  deviceName: "",
+  tokenFile: "",
+  fingerprintFile: "",
+  registrationPollMs: 5000,
 });
 
 export const Config = z.object({
@@ -25,6 +32,33 @@ export const Config = z.object({
   autoMemoryInterval: z.natural().min(1).max(1000).default(DEFAULT_CONFIG.autoMemoryInterval).volatile(),
   rootAgentsOnly: z.boolean().default(DEFAULT_CONFIG.rootAgentsOnly).volatile(),
   language: z.union(["en", "zh"]).default(DEFAULT_CONFIG.language).volatile(),
+  autoRegister: z
+    .boolean()
+    .description("When no token is configured, self-register with a persistent fingerprint and poll for approval")
+    .default(DEFAULT_CONFIG.autoRegister)
+    .volatile(),
+  deviceName: z
+    .string()
+    .description("Device name used in self-registration; defaults to this hostname")
+    .default(DEFAULT_CONFIG.deviceName)
+    .volatile(),
+  tokenFile: z
+    .string()
+    .description("File to persist the claimed token (default ~/.memoryd/token)")
+    .default(DEFAULT_CONFIG.tokenFile)
+    .volatile(),
+  fingerprintFile: z
+    .string()
+    .description("File to persist the registration fingerprint (default ~/.memoryd/fingerprint)")
+    .default(DEFAULT_CONFIG.fingerprintFile)
+    .volatile(),
+  registrationPollMs: z
+    .natural()
+    .min(1000)
+    .max(600000)
+    .description("Poll interval while waiting for an admin to approve the registration")
+    .default(DEFAULT_CONFIG.registrationPollMs)
+    .volatile(),
 });
 
 export interface MemorydPluginConfig {
@@ -36,6 +70,11 @@ export interface MemorydPluginConfig {
   autoMemoryInterval: number;
   rootAgentsOnly: boolean;
   language: "zh" | "en";
+  autoRegister: boolean;
+  deviceName: string;
+  tokenFile: string;
+  fingerprintFile: string;
+  registrationPollMs: number;
 }
 
 interface ConfigLike {
@@ -66,8 +105,31 @@ export function resolveConfig(
     ...DEFAULT_CONFIG,
     ...flat,
     apiKey: (flat.apiKey as string) || env.MEMORYD_API_KEY || "",
+    deviceName: (flat.deviceName as string) || defaultDeviceName(),
+    tokenFile: expandHome((flat.tokenFile as string) || defaultUnder(".memoryd", "token")),
+    fingerprintFile: expandHome(
+      (flat.fingerprintFile as string) || defaultUnder(".memoryd", "fingerprint"),
+    ),
   };
   return config as MemorydPluginConfig;
+}
+
+function defaultDeviceName(): string {
+  try {
+    return os.hostname();
+  } catch {
+    return "dsh-agent";
+  }
+}
+
+function defaultUnder(dir: string, file: string): string {
+  return Path.join(os.homedir(), dir, file);
+}
+
+function expandHome(p: string): string {
+  if (p === "~") return os.homedir();
+  if (p.startsWith("~/")) return Path.join(os.homedir(), p.slice(2));
+  return p;
 }
 
 export type { z };
