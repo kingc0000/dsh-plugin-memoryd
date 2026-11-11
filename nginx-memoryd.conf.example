@@ -1,0 +1,41 @@
+# 203.0.113.10 / memoryd nginx 反代模板
+# 启用步骤（需要用户先配 DNS）：
+#   1. DNS：memory.example.com A 记录 → 203.0.113.10（grey-cloud）
+#   2. 签证书：certbot certonly --nginx -d memory.example.com
+#   3. cp 本文件 /etc/nginx/conf.d/memoryd.conf && nginx -t && systemctl reload nginx
+#   4. 防火墙无需改动（443 已放行）
+# 注意：绝不动 etuangou.conf（生产电商）
+
+server {
+    listen 80;
+    server_name memory.example.com;
+    # 80 只做证书续期与跳转
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name memory.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/memory.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/memory.example.com/privkey.pem;
+
+    # SSE 支持：关闭缓冲
+    location /v1/events {
+        proxy_pass http://127.0.0.1:3233;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3233;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        client_max_body_size 2m;
+    }
+}

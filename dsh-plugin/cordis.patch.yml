@@ -1,0 +1,9 @@
+- insert:
+    - id: memoryd-memory-scope
+      name: "@deepseek-ai/cordis-plugin-group"
+      group: true
+      isolate:
+        memorydMemory: true
+      config:
+        - id: memoryd-memory
+          name: "@agentscope-ai/memoryd-dsh-plugin"

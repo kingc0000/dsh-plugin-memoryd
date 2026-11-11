@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>memoryd 管理台</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--dim:#8b949e;
+        --user:#58a6ff;--project:#3fb950;--device:#8b949e;--agent:#bc8cff;--session:#d29922;--insight:#f778ba;
+        --danger:#f85149;--warn:#d29922;--ok:#3fb950}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--text)}
+  body.locked header, body.locked nav, body.locked main{display:none}
+
+  #login{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+         background:var(--bg);z-index:99}
+  body.locked #login{display:flex}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+              padding:34px 38px;width:380px;max-width:92vw;box-shadow:0 8px 40px #0009}
+  .login-card h2{margin:0 0 4px;font-size:20px}
+  .login-card .sub{color:var(--dim);font-size:12px;margin-bottom:22px}
+  .login-card input{width:100%;margin:4px 0 12px;padding:10px 12px;font-size:14px}
+  .login-card button{width:100%;padding:10px;font-size:14px;background:var(--user);
+                     border:1px solid var(--user);color:#fff;border-radius:6px;cursor:pointer}
+  .login-err{color:var(--danger);font-size:12px;min-height:18px;margin-top:10px;text-align:center}
+  .login-foot{color:var(--dim);font-size:11px;margin-top:16px;text-align:center;line-height:1.7}
+
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 20px;
+         border-bottom:1px solid var(--border);background:var(--panel)}
+  h1{font-size:18px;margin:0;font-weight:600}
+  h1 small{color:var(--dim);font-size:12px;font-weight:400;margin-left:8px}
+  #auth{display:flex;gap:8px;align-items:center;margin-left:auto}
+  input,select,textarea,button{background:var(--bg);color:var(--text);border:1px solid var(--border);
+        border-radius:6px;padding:6px 10px;font-size:13px}
+  input:focus,select:focus,textarea:focus{outline:1px solid var(--user);border-color:var(--user)}
+  button{cursor:pointer;background:#21262d}
+  button:hover{background:#30363d}
+  button.on{background:var(--user);border-color:var(--user);color:#fff}
+  button.primary{background:var(--user);border-color:var(--user);color:#fff}
+  button.danger{background:#3d1d20;border-color:var(--danger);color:var(--danger)}
+  button.mini{padding:2px 9px;font-size:12px}
+  nav{display:flex;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--border)}
+  nav button{border-radius:6px 6px 0 0;border-bottom:none;padding:8px 18px}
+  main{padding:16px 20px;max-width:1280px;margin:0 auto}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .hint{color:var(--dim);font-size:12px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th{color:var(--dim);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid #21262d;vertical-align:top}
+  tr:hover td{background:#161b2288}
+  .badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;white-space:nowrap}
+  .b-user{background:#58a6ff22;color:var(--user)} .b-project{background:#3fb95022;color:var(--project)}
+  .b-device{background:#8b949e22;color:var(--device)} .b-agent{background:#bc8cff22;color:var(--agent)}
+  .b-session{background:#d2992222;color:var(--session)} .b-insight{background:#f778ba22;color:var(--insight)}
+  .b-pending{background:#d2992222;color:var(--warn)} .b-approved{background:#3fb95022;color:var(--ok)}
+  .b-rejected{background:#f8514922;color:var(--danger)}
+  .kind{color:var(--dim);font-size:12px}
+  .content{max-width:560px;word-break:break-word}
+  .dim{color:var(--dim)}
+  .err{color:var(--danger);padding:10px}
+  .result{padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+  .result .meta{color:var(--dim);font-size:12px;margin-bottom:4px}
+  #stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 18px;min-width:110px}
+  .stat b{font-size:22px;display:block}
+  .stat span{color:var(--dim);font-size:12px}
+  section{display:none} section.show{display:block}
+  .ok{color:var(--project)}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:60}
+  .overlay.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 26px;
+         width:520px;max-width:94vw;max-height:88vh;overflow:auto}
+  .modal h3{margin:0 0 14px;font-size:16px}
+  .modal label{display:block;font-size:12px;color:var(--dim);margin:10px 0 4px}
+  .modal input,.modal select,.modal textarea{width:100%}
+  .modal textarea{min-height:80px;resize:vertical;font-family:inherit}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+  .tokenbox{background:var(--bg);border:1px solid var(--warn);border-radius:6px;padding:10px 12px;
+            font-family:monospace;font-size:13px;word-break:break-all;margin:8px 0;color:#ffd28a}
+  .warnbox{color:var(--warn);font-size:12px;margin-top:6px}
+  .proposal{border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+  .proposal .p-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .proposal .p-reason{color:var(--dim);font-size:12px;margin:6px 0}
+  .proposal .p-content{background:var(--bg);border-radius:6px;padding:8px 10px;font-size:13px;margin-top:6px}
+</style>
+</head>
+<body class="locked">
+
+<div id="login">
+  <div class="login-card">
+    <h2>memoryd <span class="dim" style="font-size:13px">管理台</span></h2>
+    <div class="sub">跨设备记忆体系 · 需要设备 token 登录</div>
+    <input id="token" type="password" placeholder="设备 token" autocomplete="off"
+           onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">登录</button>
+    <div id="login-err" class="login-err"></div>
+    <div class="login-foot">token 由服务端 admin 注册设备时签发 · 只读+受权写操作<br>
+    连接后 token 仅保存在本浏览器 localStorage</div>
+  </div>
+</div>
+
+<header>
+  <h1>memoryd <small>跨设备记忆体系 · 管理台</small></h1>
+  <div id="auth">
+    <span id="whoami" class="hint"></span>
+    <button onclick="logout()">退出</button>
+  </div>
+</header>
+<nav>
+  <button id="nav-mem" class="on" onclick="showTab('mem')">记忆</button>
+  <button id="nav-search" onclick="showTab('search')">检索</button>
+  <button id="nav-proposals" onclick="showTab('proposals')">审批<span id="prop-badge" class="badge b-pending" style="display:none;margin-left:4px"></span></button>
+  <button id="nav-dev" onclick="showTab('dev')">设备与 Token</button>
+  <button id="nav-audit" onclick="showTab('audit')">审计</button>
+</nav>
+<main>
+
+<section id="tab-mem" class="show">
+  <div id="stats"></div>
+  <div class="row">
+    <select id="mem-scope" onchange="loadMem()">
+      <option value="">全部 scope</option>
+      <option value="user">user（共享区）</option>
+      <option value="project">project（项目区）</option>
+      <option value="device">device（私有区）</option>
+      <option value="agent">agent（经验区）</option>
+      <option value="session">session（会话黑板）</option>
+    </select>
+    <button class="primary" onclick="uiCreate()">＋ 新增记忆</button>
+    <span class="hint">所有条目可查看；增删改/提升仅对自己有权限的条目（服务端强制）</span>
+  </div>
+  <div id="mem-body"></div>
+</section>
+
+<section id="tab-search">
+  <div class="row">
+    <input id="q" placeholder="关键词（中文即可，BM25+jieba 分词检索）" style="flex:1;min-width:280px" onkeydown="if(event.key==='Enter')doSearch()">
+    <input id="qlimit" type="number" value="20" min="1" max="50" style="width:70px" title="条数">
+    <button onclick="doSearch()">检索</button>
+  </div>
+  <div id="search-body" class="hint">输入关键词检索全部记忆（读权限全开）。</div>
+</section>
+
+<section id="tab-proposals">
+  <div class="row">
+    <select id="prop-status" onchange="loadProposals()">
+      <option value="pending">待审批</option>
+      <option value="approved">已通过</option>
+      <option value="rejected">已拒绝</option>
+      <option value="all">全部</option>
+    </select>
+    <button onclick="loadProposals()">刷新</button>
+    <span class="hint">设备报送的 scope 升级 / 项目加入申请（ingest 降级时自动报送）。仅 admin 可审批。</span>
+  </div>
+  <div id="prop-body"></div>
+</section>
+
+<section id="tab-dev">
+  <div class="row">
+    <button class="primary" onclick="uiRegisterDevice()">＋ 注册新设备（签发 token）</button>
+    <span class="hint">仅 admin。token 只显示一次；可轮换（旧立即失效）/ 吊销 / 停用。</span>
+  </div>
+  <div id="dev-body"></div>
+</section>
+
+<section id="tab-audit">
+  <div class="hint" style="margin-bottom:10px">最近操作审计流水（需要 admin token）。</div>
+  <div id="audit-body"></div>
+</section>
+
+</main>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let TOKEN = '';
+let ME = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}),
+      ...(opts.headers || {})
+    }
+  });
+  if (res.status === 401) { logout('token 无效或已吊销，请重新登录'); throw new Error('401'); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+  return data;
+}
+
+async function login() {
+  TOKEN = $('token').value.trim();
+  if (!TOKEN) { $('login-err').textContent = '请输入 token'; return; }
+  $('login-err').textContent = '';
+  try {
+    ME = await api('/v1/auth/whoami');
+    localStorage.setItem('memoryd_token', TOKEN);
+    document.body.classList.remove('locked');
+    $('whoami').innerHTML = `<span class="ok">✓ ${ME.name}（设备${ME.device_id} · ${ME.role}）</span>`;
+    refreshAll();
+  } catch (e) {
+    $('login-err').textContent = '登录失败：token 无效或服务不可达';
+    TOKEN = '';
+  }
+}
+
+function logout(msg) {
+  TOKEN = ''; ME = null;
+  localStorage.removeItem('memoryd_token');
+  document.body.classList.add('locked');
+  if (msg) $('login-err').textContent = msg;
+}
+
+(function autoLogin() {
+  const saved = localStorage.getItem('memoryd_token');
+  if (saved) { $('token').value = saved; login(); }
+})();
+
+function showTab(name) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('show'));
+  $('tab-' + name).classList.add('show');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('on'));
+  $('nav-' + name).classList.add('on');
+}
+
+function refreshAll() { loadStats(); loadMem(); loadDev(); loadAudit(); loadProposals(); }
+
+/* ---- modal ---- */
+function openModal(html) { $('modal').innerHTML = html; $('overlay').classList.add('show'); }
+function closeModal() { $('overlay').classList.remove('show'); }
+
+/* ---- 记忆 CRUD ---- */
+async function loadStats() {
+  try {
+    const r = await api('/v1/health/ready');
+    const counts = {};
+    try {
+      const list = await api('/v1/memories?limit=500');
+      for (const m of list.results) counts[m.scope] = (counts[m.scope] || 0) + 1;
+    } catch (e) {}
+    let pending = 0;
+    try { pending = (await api('/v1/proposals?status=pending')).count; } catch (e) {}
+    const badge = $('prop-badge');
+    badge.style.display = pending ? 'inline-block' : 'none';
+    badge.textContent = pending;
+    $('stats').innerHTML = `
+      <div class="stat"><b>${r.devices}</b><span>设备</span></div>
+      <div class="stat"><b>${r.memories}</b><span>活跃记忆</span></div>
+      ${Object.entries(counts).map(([s, n]) =>
+        `<div class="stat"><b>${n}</b><span class="badge b-${s}">${s}</span></div>`).join('')}
+      ${pending ? `<div class="stat"><b>${pending}</b><span class="badge b-pending">待审批</span></div>` : ''}`;
+  } catch (e) {}
+}
+
+function scopeBadge(m) {
+  const ref = m.scope_ref && m.scope !== 'user' && m.scope_ref !== '*' ? ':' + m.scope_ref : '';
+  return `<span class="badge b-${m.kind === 'insight' ? 'insight' : m.scope}">${m.scope}${ref}</span>`;
+}
+
+async function loadMem() {
+  if (!ME) return;
+  const scope = $('mem-scope').value;
+  const url = '/v1/memories?limit=100' + (scope ? '&scope=' + scope : '');
+  try {
+    const r = await api(url);
+    if (!r.results.length) { $('mem-body').innerHTML = '<div class="hint">（无记忆）</div>'; return; }
+    $('mem-body').innerHTML = `<table><thead><tr>
+      <th>ID</th><th>scope</th><th>类型</th><th>内容</th><th>来源</th><th>更新</th><th>操作</th>
+      </tr></thead><tbody>` +
+      r.results.map(m => `<tr>
+        <td class="dim">${m.id}</td>
+        <td>${scopeBadge(m)}</td>
+        <td class="kind">${m.kind || ''}</td>
+        <td class="content">${esc(m.content).slice(0, 260)}</td>
+        <td class="dim">${m.origin?.agent_id || ''}${m.origin?.device_id ? '/' + m.origin.device_id : ''}</td>
+        <td class="dim">${(m.updated_at || '').slice(0, 16)}</td>
+        <td style="white-space:nowrap">
+          <button class="mini" onclick="uiEdit(${m.id})">编辑</button>
+          <button class="mini" onclick="uiPromote(${m.id})">提升</button>
+          <button class="mini danger" onclick="uiDelete(${m.id})">删除</button>
+        </td>
+      </tr>`).join('') + '</tbody></table>' +
+      `<div class="hint" style="margin-top:8px">共 ${r.total} 条（显示前 ${r.results.length} 条）· 无权操作会返回 403</div>`;
+  } catch (e) { $('mem-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+function uiCreate() {
+  openModal(`
+    <h3>新增记忆</h3>
+    <label>内容</label>
+    <textarea id="c-content" placeholder="一句话记忆（中文）"></textarea>
+    <label>scope</label>
+    <select id="c-scope" onchange="$('c-ref-wrap').style.display=this.value==='project'?'block':'none'">
+      <option value="user">user（共享区）</option>
+      <option value="device" selected>device（本机私有区）</option>
+      <option value="agent">agent（经验区）</option>
+      <option value="project">project（项目区·需成员）</option>
+    </select>
+    <div id="c-ref-wrap" style="display:none">
+      <label>项目 slug</label>
+      <input id="c-ref" placeholder="如 etuangou">
+    </div>
+    <label>类型</label>
+    <select id="c-kind">
+      <option value="fact">fact（事实）</option>
+      <option value="preference">preference（偏好）</option>
+      <option value="procedure">procedure（流程）</option>
+      <option value="observation">observation（观察）</option>
+    </select>
+    <div class="actions">
+      <button onclick="closeModal()">取消</button>
+      <button class="primary" onclick="doCreate()">写入</button>
+    </div>`);
+}
+
+async function doCreate() {
+  try {
+    const scope = $('c-scope').value;
+    const body = {
+      content: $('c-content').value.trim(),
+      scope, kind: $('c-kind').value,
+      ...(scope === 'project' ? { scope_ref: $('c-ref').value.trim() } : {})
+    };
+    if (!body.content) return alert('内容不能为空');
+    const r = await api('/v1/memories', { method: 'POST', body: JSON.stringify(body) });
+    closeModal(); loadStats(); loadMem();
+  } catch (e) { alert('写入失败：' + e.message); }
+}
+
+function uiEdit(id) {
+  openModal(`
+    <h3>编辑记忆 #${id}</h3>
+    <label>新内容（创建新版本，旧版进版本链）</label>
+    <textarea id="e-content"></textarea>
+    <div class="actions">
+      <button onclick="closeModal()">取消</button>
+      <button class="primary" onclick="doEdit(${id})">保存</button>
+    </div>`);
+  api('/v1/memories/' + id).then(m => { $('e-content').value = m.content; })
+    .catch(e => { alert(e.message); closeModal(); });
+}
+
+async function doEdit(id) {
+  try {
+    await api('/v1/memories/' + id, { method: 'PATCH', body: JSON.stringify({ content: $('e-content').value.trim() }) });
+    closeModal(); loadMem();
+  } catch (e) { alert('保存失败：' + e.message); }
+}
+
+async function uiDelete(id) {
+  if (!confirm('软删除记忆 #' + id + '？（列表和检索立即不可见，可由管理员恢复）')) return;
+  try {
+    await api('/v1/memories/' + id, { method: 'DELETE' });
+    loadStats(); loadMem();
+  } catch (e) { alert('删除失败：' + e.message); }
+}
+
+function uiPromote(id) {
+  openModal(`
+    <h3>提升记忆 #${id} scope</h3>
+    <label>目标 scope（低→高：device → agent → project → user）</label>
+    <select id="p-scope" onchange="$('p-ref-wrap').style.display=this.value==='project'?'block':'none'">
+      <option value="user">user（共享区）</option>
+      <option value="agent">agent（经验区）</option>
+      <option value="project">project（项目区）</option>
+    </select>
+    <div id="p-ref-wrap" style="display:none">
+      <label>项目 slug</label>
+      <input id="p-ref" placeholder="如 etuangou">
+    </div>
+    <label>理由（审计记录）</label>
+    <input id="p-reason" placeholder="为什么这条应该升级">
+    <div class="actions">
+      <button onclick="closeModal()">取消</button>
+      <button class="primary" onclick="doPromote(${id})">提升</button>
+    </div>`);
+}
+
+async function doPromote(id) {
+  try {
+    const scope = $('p-scope').value;
+    const body = {
+      to_scope: scope,
+      reason: $('p-reason').value.trim() || '管理台手动提升',
+      ...(scope === 'project' ? { to_scope_ref: $('p-ref').value.trim() } : {})
+    };
+    await api(`/v1/memories/${id}:promote`, { method: 'POST', body: JSON.stringify(body) });
+    closeModal(); loadStats(); loadMem();
+  } catch (e) { alert('提升失败：' + e.message); }
+}
+
+/* ---- 检索 ---- */
+async function doSearch() {
+  if (!ME) return;
+  const q = $('q').value.trim();
+  if (!q) return;
+  $('search-body').innerHTML = '<div class="hint">检索中…</div>';
+  try {
+    const r = await api('/v1/memories:search', {
+      method: 'POST', body: JSON.stringify({ query: q, limit: Number($('qlimit').value) || 20 })
+    });
+    if (!r.results.length) { $('search-body').innerHTML = '<div class="hint">未检索到相关记忆。</div>'; return; }
+    $('search-body').innerHTML = r.results.map(m => `
+      <div class="result">
+        <div class="meta">#${m.id} ${scopeBadge(m)} <span class="kind">${m.kind || ''}</span>
+          · 来源 ${m.origin?.agent_id || '?'}${m.origin?.device_id ? '/设备' + m.origin.device_id : ''}
+          · score ${m.score} · ${(m.updated_at || '').slice(0, 10)}</div>
+        <div>${esc(m.content)}</div>
+      </div>`).join('');
+  } catch (e) { $('search-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+/* ---- 审批 ---- */
+async function loadProposals() {
+  if (!ME) return;
+  const status = $('prop-status').value;
+  try {
+    const r = await api('/v1/proposals?status=' + status);
+    if (!r.results.length) { $('prop-body').innerHTML = '<div class="hint">（无申请）</div>'; return; }
+    $('prop-body').innerHTML = r.results.map(p => `
+      <div class="proposal">
+        <div class="p-head">
+          <span class="badge b-${p.type === 'scope_upgrade' ? 'agent' : 'project'}">${p.type}</span>
+          <b>${esc(p.device_name)}</b>
+          <span class="dim">→</span>
+          <span class="badge b-${p.target_scope.startsWith('project') ? 'project' : 'user'}">${esc(p.target_scope)}</span>
+          <span class="badge b-${p.status}">${p.status}</span>
+          <span class="dim" style="margin-left:auto">${(p.created_at || '').slice(0, 16)}</span>
+        </div>
+        ${p.memory_content ? `<div class="p-content">${esc(p.memory_content).slice(0, 200)}</div>` : ''}
+        ${p.reason ? `<div class="p-reason">理由：${esc(p.reason)}</div>` : ''}
+        ${p.status === 'pending' ? `
+        <div class="row" style="margin:8px 0 0">
+          ${ME.role === 'admin' ? `
+          <button class="mini primary" onclick="decideProposal(${p.id},'approve')">✓ 通过并执行</button>
+          <button class="mini danger" onclick="decideProposal(${p.id},'reject')">✗ 拒绝</button>` :
+          '<span class="hint">等待 admin 审批</span>'}
+        </div>` : ''}
+      </div>`).join('');
+  } catch (e) { $('prop-body').innerHTML = `<div class="hint">${esc(e.message)}</div>`; }
+}
+
+async function decideProposal(id, act) {
+  try {
+    await api(`/v1/proposals/${id}:${act}`, { method: 'POST', body: JSON.stringify({ note: '管理台' + (act === 'approve' ? '审批通过' : '拒绝') }) });
+    loadProposals(); loadStats(); loadMem(); loadDev();
+  } catch (e) { alert('操作失败：' + e.message); }
+}
+
+/* ---- 设备与 token 管理 ---- */
+async function loadDev() {
+  if (!ME) return;
+  try {
+    const r = await api('/v1/devices');
+    const list = r.results || r;
+    $('dev-body').innerHTML = `<table><thead><tr>
+      <th>ID</th><th>名称</th><th>角色</th><th>状态</th><th>最近活跃</th><th>创建</th><th>Token 管理</th>
+      </tr></thead><tbody>` +
+      list.map(d => `<tr>
+        <td class="dim">${d.id}</td><td>${esc(d.name)}</td><td>${d.role}</td>
+        <td>${d.active ? '<span class="ok">活跃</span>' : '<span class="dim">停用</span>'}</td>
+        <td class="dim">${(d.last_seen_at || '').slice(0, 16)}</td>
+        <td class="dim">${(d.created_at || '').slice(0, 10)}</td>
+        <td style="white-space:nowrap">
+          ${ME.role === 'admin' ? `
+          <button class="mini" onclick="uiRotate(${d.id},'${esc(d.name)}')">轮换</button>
+          <button class="mini" onclick="uiRevoke(${d.id},'${esc(d.name)}')">吊销</button>
+          ${d.active
+            ? `<button class="mini danger" onclick="doDeactivate(${d.id})">停用</button>`
+            : `<button class="mini" onclick="doActivate(${d.id})">恢复</button>`}` :
+          '<span class="hint">仅 admin</span>'}
+        </td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { $('dev-body').innerHTML = `<div class="hint">${esc(e.message)}（非 admin token 不可见）</div>`; }
+}
+
+function uiRegisterDevice() {
+  openModal(`
+    <h3>注册新设备（签发 token）</h3>
+    <label>设备名称</label>
+    <input id="d-name" placeholder="如 oracle-141 / macbook-pro">
+    <label>角色</label>
+    <select id="d-role">
+      <option value="device" selected>device（普通设备）</option>
+      <option value="admin">admin（管理员）</option>
+    </select>
+    <div class="actions">
+      <button onclick="closeModal()">取消</button>
+      <button class="primary" onclick="doRegister()">签发</button>
+    </div>`);
+}
+
+async function doRegister() {
+  try {
+    const r = await api('/v1/devices', { method: 'POST', body: JSON.stringify({ name: $('d-name').value.trim(), role: $('d-role').value }) });
+    openModal(`
+      <h3>✓ 设备已注册</h3>
+      <div>设备 <b>${esc(r.name)}</b>（id=${r.device_id}，${r.role}）</div>
+      <label>一次性 token（${esc(r.note || '只显示这一次')}）</label>
+      <div class="tokenbox">${esc(r.token)}</div>
+      <div class="warnbox">⚠️ 请立即复制保存到安全位置（如 /etc/memoryd/ 下 600 权限文件）。关闭此弹窗后无法再次查看。</div>
+      <div class="actions">
+        <button onclick="navigator.clipboard.writeText('${esc(r.token)}').then(()=>alert('已复制'))">复制 token</button>
+        <button class="primary" onclick="closeModal();loadDev()">完成</button>
+      </div>`);
+    loadDev(); loadStats();
+  } catch (e) { alert('注册失败：' + e.message); }
+}
+
+async function uiRotate(id, name) {
+  if (!confirm(`轮换设备 ${name}（id=${id}）的 token？\n旧 token 立即失效，该设备所有连接断开。`)) return;
+  try {
+    const r = await api(`/v1/devices/${id}/token`, { method: 'POST' });
+    openModal(`
+      <h3>✓ token 已轮换（${esc(name)}）</h3>
+      <div class="tokenbox">${esc(r.token)}</div>
+      <div class="warnbox">⚠️ 新 token 只显示这一次，旧 token 已立即失效。</div>
+      <div class="actions"><button class="primary" onclick="closeModal()">完成</button></div>`);
+  } catch (e) { alert('轮换失败：' + e.message); }
+}
+
+async function uiRevoke(id, name) {
+  if (!confirm(`吊销设备 ${name}（id=${id}）的 token？\n该设备将无法认证（等于锁死，需重新签发才能恢复）。`)) return;
+  try {
+    await api(`/v1/devices/${id}/token`, { method: 'DELETE' });
+    loadDev();
+  } catch (e) { alert('吊销失败：' + e.message); }
+}
+
+async function doDeactivate(id) {
+  if (!confirm('停用设备 id=' + id + '？（可随时恢复）')) return;
+  try { await api(`/v1/devices/${id}/deactivate`, { method: 'POST' }); loadDev(); }
+  catch (e) { alert('操作失败：' + e.message); }
+}
+
+async function doActivate(id) {
+  try { await api(`/v1/devices/${id}/activate`, { method: 'POST' }); loadDev(); }
+  catch (e) { alert('恢复失败：' + e.message); }
+}
+
+/* ---- 审计 ---- */
+async function loadAudit() {
+  if (!ME) return;
+  try {
+    const r = await api('/v1/audit?limit=100');
+    $('audit-body').innerHTML = `<table><thead><tr>
+      <th>时间</th><th>设备</th><th>动作</th><th>scope</th><th>详情</th>
+      </tr></thead><tbody>` +
+      r.results.map(a => `<tr>
+        <td class="dim">${(a.created_at || '').slice(0, 19)}</td>
+        <td>${esc(a.device_name || a.device_id || 'system')}</td>
+        <td>${a.action}</td>
+        <td class="dim">${a.scope || ''}${a.scope_ref && a.scope_ref !== '*' ? ':' + a.scope_ref : ''}</td>
+        <td class="content">${esc(a.detail || '')}</td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { $('audit-body').innerHTML = `<div class="hint">${esc(e.message)}（非 admin token 不可见）</div>`; }
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>

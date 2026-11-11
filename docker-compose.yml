@@ -1,0 +1,23 @@
+services:
+  memoryd:
+    build: .
+    # 或使用预构建镜像：image: ghcr.io/<owner>/memoryd:latest
+    image: memoryd
+    container_name: memoryd
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3233:3233"   # 只绑本机；远程访问请前置 nginx TLS 反代（见 nginx-*.conf.example）
+    environment:
+      # LLM 提取/裁决用 OpenAI 兼容端点（必填，否则 ingest/insight 降级为跳过）
+      MEMORYD_LLM_BASE_URL: "https://api.openai.com/v1"
+      LLM_API_KEY: "${LLM_API_KEY:?请在环境或 .env 提供 LLM_API_KEY}"
+      MEMORYD_LLM_MODEL: "gpt-4o-mini"
+      # 可选行为开关
+      MEMORYD_AGENT_SCOPE_SHARED: "true"
+      MEMORYD_SECRET_REDLINE: "true"
+      MEMORYD_SEARCH_TOP_K: "100"
+    volumes:
+      - memoryd-data:/var/lib/memoryd
+
+volumes:
+  memoryd-data:

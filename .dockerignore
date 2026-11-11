@@ -1,0 +1,13 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+dsh-plugin
+plugin
+legacy-dist-backup
+scripts
+*.md
+*.example
+Dockerfile
+docker-compose.yml
+.dockerignore

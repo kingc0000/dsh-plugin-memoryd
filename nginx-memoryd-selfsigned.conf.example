@@ -1,0 +1,32 @@
+# Plan B：自签 TLS（无 DNS 时先用）— 启用步骤：
+#   1. bash /opt/memoryd/scripts/gen-selfsigned-tls.sh
+#   2. cp 本文件 /etc/nginx/conf.d/memoryd-tls.conf && nginx -t && systemctl reload nginx
+#   3. iptables 放行 2043：iptables -I INPUT -p tcp --dport 2043 -j ACCEPT
+#   4. 客户端信任：设环境变量 NODE_EXTRA_CA_CERTS=/etc/memoryd/tls/ca.pem
+# 与生产 etuangou.conf 完全隔离（独立端口 + 独立文件），不动 80/443。
+# 域名可用后切 nginx-memoryd.conf.example，本配置可删。
+
+server {
+    listen 2043 ssl;
+    server_name _;
+
+    ssl_certificate     /etc/memoryd/tls/server.pem;
+    ssl_certificate_key /etc/memoryd/tls/server.key;
+
+    # SSE 支持：关闭缓冲
+    location /v1/events {
+        proxy_pass http://127.0.0.1:3233;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3233;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        client_max_body_size 2m;
+    }
+}

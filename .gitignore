@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 服务端数据 / 本机密钥
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+
+# DSH 插件工程（随仓库发布源码，但排除构建产物与依赖）
+dsh-plugin/node_modules/
+dsh-plugin/dist/
+dsh-plugin/legacy-dist-backup/
+
+# 本机专用运维笔记（含真实 IP/备份路径，不进公开仓库）
+*.local.md
+
+# 本机专用运维脚本（DSH profile 恢复，不属于本项目）
+scripts/restore-dsh-profile-bundles.sh
