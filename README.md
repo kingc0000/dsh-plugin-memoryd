@@ -7,7 +7,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![docker](https://github.com/kingc0000/dsh-plugin-memoryd/actions/workflows/docker.yml/badge.svg)](https://github.com/kingc0000/dsh-plugin-memoryd/actions/workflows/docker.yml)
 [![Docker](https://img.shields.io/badge/ghcr.io-kingc0000%2Fdsh-plugin-memoryd-2496ED?logo=docker&logoColor=white)](https://github.com/kingc0000/dsh-plugin-memoryd/pkgs/container/dsh-plugin-memoryd)
-[![Docker Hub](https://img.shields.io/badge/docker.io-mejeor%2Fmemoryd-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/mejeor/memoryd)
+[![Docker Hub](https://img.shields.io/badge/docker.io-mejeor%2Fdsh-plugin-memoryd-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/mejeor/dsh-plugin-memoryd)
 
 FastAPI · SQLite (FTS5 + jieba BM25) · Bearer device tokens · server-side LLM extraction & dedup · web admin console · [DeepSeek Harness plugin](dsh-plugin/)
 
