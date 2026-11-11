@@ -45,7 +45,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/memoryd
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/dsh-plugin-memoryd
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}

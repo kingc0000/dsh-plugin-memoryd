@@ -1,7 +1,7 @@
 services:
   memoryd:
     build: .
-    # 或使用预构建镜像：image: ghcr.io/<owner>/memoryd:latest
+    # 或使用预构建镜像：image: ghcr.io/<owner>/dsh-plugin-memoryd:latest
     image: memoryd
     container_name: memoryd
     restart: unless-stopped

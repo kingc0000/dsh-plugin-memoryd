@@ -1,5 +1,5 @@
 {
-  "name": "@agentscope-ai/memoryd-dsh-plugin",
+  "name": "@agentscope-ai/dsh-plugin-memoryd",
   "version": "0.2.0",
   "description": "memoryd cross-device long-term memory for DeepSeek Harness (shared + device-isolated zones)",
   "type": "module",
