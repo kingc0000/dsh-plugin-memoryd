@@ -167,7 +167,7 @@ curl -s http://127.0.0.1:3233/v1/memories:search \
 | GET | `/v1/health` · `/v1/health/ready` | 无 | 存活 / 统计 |
 | GET | `/v1/auth/whoami` | 设备 | token 自省 |
 | | **记忆** | | |
-| GET | `/v1/memories` | 设备 | 列表——过滤：`scope`、`kind`、`limit`、`include_insight` |
+| GET | `/v1/memories` | 设备 | 列表——过滤：`scope`、`kind`、`limit`、`offset`、`include_insight`（分页）|
 | POST | `/v1/memories` | 设备 | 新增（scope 服务端裁决；无权目标自动降级 `device` 并生成审批申请）|
 | POST | `/v1/memories:search` | 设备 | BM25 检索——`query`（1–500）、`scopes?`、`limit`（默认 8，最大 50）、`since?`、`include_insight?`（默认 false）|
 | GET | `/v1/memories/{id}` | 设备 | 单条 |

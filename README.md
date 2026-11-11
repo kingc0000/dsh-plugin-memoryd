@@ -167,7 +167,7 @@ Auth: `Authorization: Bearer <device-token>` on everything except health checks 
 | GET | `/v1/health` · `/v1/health/ready` | — | Liveness / stats |
 | GET | `/v1/auth/whoami` | device | Token introspection |
 | | **memories** | | |
-| GET | `/v1/memories` | device | List — filters: `scope`, `kind`, `limit`, `include_insight` |
+| GET | `/v1/memories` | device | List — filters: `scope`, `kind`, `limit`, `offset`, `include_insight` (paged) |
 | POST | `/v1/memories` | device | Create (scope adjudicated server-side; unauthorized scopes degrade to `device` + proposal) |
 | POST | `/v1/memories:search` | device | BM25 search — `query` (1–500), `scopes?`, `limit` (default 8, max 50), `since?`, `include_insight?` (default false) |
 | GET | `/v1/memories/{id}` | device | Fetch one |

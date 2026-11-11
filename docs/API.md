@@ -358,8 +358,9 @@ curl -s http://127.0.0.1:3233/v1/ingest \
 
 | Query | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `status` | string | — | `pending` \| `approved` \| `rejected` |
-| `limit` | int | 50 | 条数 |
+| `status` | string | `pending` | `pending` \| `approved` \| `rejected` \| `all` |
+| `limit` | int | 20 | 每页条数（1–500）|
+| `offset` | int | 0 | 分页偏移 |
 
 ```json
 {
@@ -379,7 +380,10 @@ curl -s http://127.0.0.1:3233/v1/ingest \
       "memory_content": "memoryd-dsh-plugin 已上线…"
     }
   ],
-  "count": 1
+  "count": 1,
+  "total": 1,
+  "limit": 20,
+  "offset": 0
 }
 ```
 
@@ -442,11 +446,21 @@ curl -s http://127.0.0.1:3233/v1/ingest \
 
 权限：admin。
 
+| Query | 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `limit` | int | 20 | 每页条数（1–500）|
+| `offset` | int | 0 | 分页偏移 |
+
 ```json
-[
-  {"id": 1, "name": "admin", "role": "admin", "active": true,
-   "last_seen_at": "2026-11-10 22:40:00", "created_at": "..."}
-]
+{
+  "results": [
+    {"id": 1, "name": "admin", "role": "admin", "active": true,
+     "last_seen_at": "2026-11-10 22:40:00", "created_at": "..."}
+  ],
+  "total": 3,
+  "limit": 20,
+  "offset": 0
+}
 ```
 
 ### `POST /v1/devices`
@@ -548,8 +562,8 @@ data: {"type":"memory.write","scope":"user","scope_ref":"","memory_id":214,"devi
 
 | Query | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `limit` | int | 50 | 条数 |
-| `offset` | int | 0 | 偏移 |
+| `limit` | int | 20 | 每页条数（1–500）|
+| `offset` | int | 0 | 分页偏移 |
 
 ```json
 {
