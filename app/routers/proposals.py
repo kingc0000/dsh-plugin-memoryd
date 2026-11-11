@@ -77,7 +77,8 @@ def submit_proposal(body: ProposalCreate, device: dict = Depends(get_current_dev
 
 @router.get("/v1/proposals", tags=["proposals"])
 def list_proposals(status: str = Query("pending", pattern="^(pending|approved|rejected|all)$"),
-                    limit: int = Query(100, ge=1, le=500),
+                    limit: int = Query(20, ge=1, le=500),
+                    offset: int = Query(0, ge=0),
                     device: dict = Depends(get_current_device)):
     conn = get_connection()
     where, args = ["1=1"], []
@@ -87,14 +88,19 @@ def list_proposals(status: str = Query("pending", pattern="^(pending|approved|re
     if device["role"] != "admin":
         where.append("p.device_id=?")
         args.append(device["id"])
+    where_sql = " AND ".join(where)
     rows = conn.execute(
         "SELECT p.*, d.name AS device_name, m.content AS memory_content "
         "FROM proposals p JOIN devices d ON d.id=p.device_id "
         "LEFT JOIN memories m ON m.id=p.memory_id "
-        f"WHERE {' AND '.join(where)} ORDER BY p.id DESC LIMIT ?",
-        (*args, limit),
+        f"WHERE {where_sql} ORDER BY p.id DESC LIMIT ? OFFSET ?",
+        (*args, limit, offset),
     ).fetchall()
-    return {"results": [dict(r) for r in rows], "count": len(rows)}
+    total = conn.execute(
+        f"SELECT COUNT(*) AS c FROM proposals p WHERE {where_sql}", args
+    ).fetchone()["c"]
+    return {"results": [dict(r) for r in rows], "count": len(rows), "total": total,
+            "limit": limit, "offset": offset}
 
 
 def _approve(pid: int, prop: dict, admin: dict, note: str) -> dict:

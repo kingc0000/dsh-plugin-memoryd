@@ -1,7 +1,7 @@
 """设备管理与鉴权相关端点（/v1/auth, /v1/devices）。"""
 import secrets as pysecrets
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..auth import audit, get_current_device, hash_for_store, issue_token, require_admin
 from ..db import write_transaction, get_connection
@@ -11,16 +11,24 @@ router = APIRouter()
 
 
 @router.get("/v1/devices", tags=["devices"])
-def list_devices(admin: dict = Depends(require_admin)):
+def list_devices(limit: int = Query(20, ge=1, le=500), offset: int = Query(0, ge=0),
+                 admin: dict = Depends(require_admin)):
     conn = get_connection()
-    return [
-        {
-            "id": d["id"], "name": d["name"], "role": d["role"],
-            "active": d["active"], "last_seen_at": d["last_seen_at"],
-            "created_at": d["created_at"],
-        }
-        for d in conn.execute("SELECT * FROM devices ORDER BY id").fetchall()
-    ]
+    rows = conn.execute(
+        "SELECT * FROM devices ORDER BY id LIMIT ? OFFSET ?", (limit, offset)
+    ).fetchall()
+    total = conn.execute("SELECT COUNT(*) AS c FROM devices").fetchone()["c"]
+    return {
+        "results": [
+            {
+                "id": d["id"], "name": d["name"], "role": d["role"],
+                "active": d["active"], "last_seen_at": d["last_seen_at"],
+                "created_at": d["created_at"],
+            }
+            for d in rows
+        ],
+        "total": total, "limit": limit, "offset": offset,
+    }
 
 
 @router.post("/v1/devices", response_model=DeviceCreateResponse, tags=["devices"])

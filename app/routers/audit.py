@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/v1/audit", tags=["audit"])
-def list_audit(limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0),
+def list_audit(limit: int = Query(20, ge=1, le=500), offset: int = Query(0, ge=0),
                device: dict = Depends(require_admin)):
     conn = get_connection()
     rows = conn.execute(
