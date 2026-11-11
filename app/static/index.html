@@ -220,9 +220,21 @@ function logout(msg) {
   if (msg) $('login-err').textContent = msg;
 }
 
-(function autoLogin() {
+(function boot() {
   const saved = localStorage.getItem('memoryd_token');
-  if (saved) { $('token').value = saved; login(); }
+  if (!saved) return;                        // 无 token：保持登录页（初始 locked）
+  TOKEN = saved;
+  // 同步解锁：直接渲染主界面，token 验证放后台，刷新不再闪登录页
+  document.body.classList.remove('locked');
+  $('whoami').innerHTML = '<span class="dim">连接中…</span>';
+  api('/v1/auth/whoami').then(me => {
+    ME = me;
+    $('whoami').innerHTML = `<span class="ok">✓ ${ME.name}（设备${ME.device_id} · ${ME.role}）</span>`;
+    refreshAll();
+  }).catch(e => {
+    // 401 时 api() 已调用 logout() 重新锁定；这里是网络等其他错误
+    if (TOKEN) $('whoami').innerHTML = '<span class="dim">连接失败，服务不可达（数据未加载）</span>';
+  });
 })();
 
 function showTab(name) {
