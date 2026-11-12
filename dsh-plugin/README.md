@@ -122,7 +122,7 @@ If the agent writes to a scope it lacks permission for, memoryd degrades the wri
 
 | Symptom | Check |
 |---|---|
-| `memoryd 不可用或未配置 token` | `apiKey` missing / wrong; call `memory_status` |
+| `memoryd 不可用或未配置 token` | `token` missing / wrong; call `memory_status` |
 | Search returns nothing | Token revoked, or no matching memories; try broader keywords |
 | Auto capture silent | `autoMemoryEnabled` off, or fewer than `autoMemoryInterval` complete turns (a turn needs both user and assistant messages) |
 

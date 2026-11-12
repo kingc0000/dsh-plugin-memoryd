@@ -121,7 +121,7 @@ LLM 想写无权限的目标 scope 时，memoryd 会自动降级写入 device �
 
 | 症状 | 检查 |
 |---|---|
-| `memoryd 不可用或未配置 token` | `apiKey` 缺失/错误；调 `memory_status` |
+| `memoryd 不可用或未配置 token` | `token` 缺失/错误；调 `memory_status` |
 | 检索无结果 | token 被吊销，或确实没有相关记忆；换更宽的关键词 |
 | 自动捕获无动静 | `autoMemoryEnabled` 关了，或完整轮次未攒满（一轮需要同时有用户和助手消息）|
 
