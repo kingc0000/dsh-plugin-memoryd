@@ -19,6 +19,7 @@ interface PluginContext {
 
 interface MemorydConfigInput {
   endpoint?: string | { get?: () => unknown };
+  token?: string | { get?: () => unknown };
   apiKey?: string | { get?: () => unknown };
   requestTimeoutMs?: number | { get?: () => unknown };
   searchLimit?: number | { get?: () => unknown };
@@ -35,7 +36,7 @@ export function apply(ctx: PluginContext, input: MemorydConfigInput = {}): void 
   const tokenStore = new TokenStore(current, fetch, ctx.logger);
   const client = new MemorydClient(() => ({
     endpoint: current().endpoint,
-    apiKey: tokenStore.resolve(),
+    apiKey: tokenStore.resolve(), // MemorydClientConfig.apiKey 字段实际承载 device token（Bearer）
     requestTimeoutMs: current().requestTimeoutMs,
   }));
   const runtime = new MemorydRuntime(client, current, ctx.logger);

@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG, resolveConfig } from "../dist/config.js";
 
 test("resolveConfig returns defaults for empty input", () => {
   const cfg = resolveConfig({}, {});
+  assert.equal(cfg.token, "");
   assert.equal(cfg.apiKey, "");
   assert.equal(cfg.deviceName, os.hostname());
   assert.match(cfg.tokenFile, /\.memoryd[\\/]token$/);
@@ -15,12 +16,23 @@ test("resolveConfig returns defaults for empty input", () => {
 
 test("resolveConfig reads env MEMORYD_API_KEY as fallback", () => {
   const cfg = resolveConfig({}, { MEMORYD_API_KEY: "tok-123" });
-  assert.equal(cfg.apiKey, "tok-123");
+  assert.equal(cfg.token, "tok-123");
 });
 
-test("resolveConfig prefers explicit apiKey over env", () => {
-  const cfg = resolveConfig({ apiKey: "explicit" }, { MEMORYD_API_KEY: "env" });
-  assert.equal(cfg.apiKey, "explicit");
+test("resolveConfig prefers explicit token over env", () => {
+  const cfg = resolveConfig({ token: "explicit" }, { MEMORYD_TOKEN: "env" });
+  assert.equal(cfg.token, "explicit");
+});
+
+test("resolveConfig: token beats deprecated apiKey alias", () => {
+  const cfg = resolveConfig({ token: "new", apiKey: "old" }, {});
+  assert.equal(cfg.token, "new");
+});
+
+test("resolveConfig: deprecated apiKey alias still works", () => {
+  const cfg = resolveConfig({ apiKey: "legacy" }, {});
+  assert.equal(cfg.token, "legacy");
+  assert.equal(cfg.apiKey, "legacy");
 });
 
 test("resolveConfig resolves getter-style (volatile) values", () => {

@@ -13,6 +13,7 @@ function mkTempDir() {
 function configFor(dir, endpoint, extra = {}) {
   return {
     endpoint,
+    token: "",
     apiKey: "",
     requestTimeoutMs: 3000,
     searchLimit: 8,
@@ -106,7 +107,7 @@ test("existing token file: loads without registering", async () => {
   server.close();
 });
 
-test("explicit apiKey wins over auto-registration", async () => {
+test("explicit token wins over auto-registration", async () => {
   const dir = mkTempDir();
   let registered = 0;
   const server = await startServer({
@@ -115,7 +116,7 @@ test("explicit apiKey wins over auto-registration", async () => {
       return { status: 202, json: {} };
     },
   });
-  const store = new TokenStore(() => configFor(dir, `http://127.0.0.1:${server.address().port}`, { apiKey: "explicit-token" }));
+  const store = new TokenStore(() => configFor(dir, `http://127.0.0.1:${server.address().port}`, { token: "explicit-token" }));
   store.start();
   assert.equal(store.resolve(), "explicit-token");
   await new Promise((r) => setTimeout(r, 200));

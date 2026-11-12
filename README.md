@@ -143,7 +143,7 @@ Full docs in [`dsh-plugin/`](dsh-plugin/README.md). The plugin registers four to
           name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
-            apiKey: <device-token>
+            token: <device-token>  # optional: omit to self-register
             language: zh
 ```
 

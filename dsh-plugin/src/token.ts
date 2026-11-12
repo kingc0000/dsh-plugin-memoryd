@@ -1,4 +1,4 @@
-/** 设备 token 解析与自助注册：apiKey > tokenFile > 自动注册（持久化指纹 + 轮询审批）。 */
+/** 设备 token 解析与自助注册：token 配置/环境变量 > tokenFile > 自动注册（持久化指纹 + 轮询审批）。 */
 import fs from "node:fs";
 import Path from "node:path";
 import { randomBytes } from "node:crypto";
@@ -26,7 +26,7 @@ export class TokenStore {
   /** 当前可用 token（显式 apiKey 优先于自动注册获得的 token）。 */
   resolve(): string {
     const cfg = this.getConfig();
-    return cfg.apiKey || this.token;
+    return cfg.token || this.token;
   }
 
   /** 生命周期入口：尝试加载已有 token，否则自动注册。 */
@@ -37,13 +37,13 @@ export class TokenStore {
     this.token = this.readTokenFile();
     if (this.resolve()) {
       this.logger?.info?.(
-        `memoryd token ready (${cfg.apiKey ? "config" : "file: " + cfg.tokenFile})`,
+        `memoryd token ready (${cfg.token ? "config" : "file: " + cfg.tokenFile})`,
       );
       return;
     }
     if (!cfg.autoRegister) {
       this.logger?.warn?.(
-        "memoryd: no token configured and autoRegister is false — memory tools will be unauthenticated until you set apiKey",
+        "memoryd: no token configured and autoRegister is false — memory tools will be unauthenticated until you set token",
       );
       return;
     }

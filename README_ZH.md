@@ -143,7 +143,7 @@ python scripts/register_device.py --name my-agent --endpoint https://<host> --wa
           name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
-            apiKey: <设备token>
+            token: <设备token>    # 可省略：省略则自动注册等待批准
             language: zh
 ```
 

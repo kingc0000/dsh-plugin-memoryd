@@ -38,6 +38,7 @@ export interface ClientResult<T = unknown> {
 
 export interface MemorydClientConfig {
   endpoint: string;
+  /** memoryd device token（Bearer 凭证；字段名 apiKey 为历史命名）。 */
   apiKey: string;
   requestTimeoutMs: number;
 }

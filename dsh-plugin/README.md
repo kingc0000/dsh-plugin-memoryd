@@ -56,10 +56,11 @@ Add the plugin to your DSH profile:
           name: "dsh-plugin-memoryd"
           config:
             endpoint: http://127.0.0.1:3233
-            # apiKey is optional: when omitted the plugin self-registers
+            # token is optional: when omitted the plugin self-registers
             # (persistent fingerprint) and claims the one-time token automatically
             # once an admin approves; it persists to ~/.memoryd/token
-            apiKey: <device-token>   # explicit token takes priority; or env MEMORYD_API_KEY
+            token: <device-token>   # explicit token takes priority; or env MEMORYD_TOKEN
+            # apiKey is a deprecated alias of token
             language: zh
             searchLimit: 8
 ```
@@ -71,7 +72,8 @@ Restart DSH. Sessions should now see the memory guidance and the four tools.
 | Option | Default | Description |
 |---|---|---|
 | `endpoint` | `http://127.0.0.1:3233` | memoryd HTTP service URL |
-| `apiKey` | `""` | Device token; env `MEMORYD_API_KEY` as fallback; if still unset, self-registration kicks in |
+| `token` | `""` | memoryd device token (Bearer credential); env `MEMORYD_TOKEN` (`MEMORYD_API_KEY` also accepted); if still unset, self-registration kicks in |
+| `apiKey` | `""` | Deprecated alias of `token` (same value) |
 | `autoRegister` | `true` | Self-register (fingerprint + approval polling) when no token is configured |
 | `deviceName` | hostname | Device name used for self-registration |
 | `tokenFile` | `~/.memoryd/token` | Where the claimed token is persisted (mode 600) |

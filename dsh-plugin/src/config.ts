@@ -5,6 +5,7 @@ import z from "@deepseek-ai/schemastery";
 
 export const DEFAULT_CONFIG = Object.freeze({
   endpoint: "http://127.0.0.1:3233",
+  token: "",
   apiKey: "",
   requestTimeoutMs: 10000,
   searchLimit: 8,
@@ -21,9 +22,14 @@ export const DEFAULT_CONFIG = Object.freeze({
 
 export const Config = z.object({
   endpoint: z.string().description("memoryd HTTP service URL").default(DEFAULT_CONFIG.endpoint).volatile(),
+  token: z
+    .string()
+    .description("memoryd device token (Bearer credential); env MEMORYD_TOKEN is also supported. Omit to self-register")
+    .default("")
+    .volatile(),
   apiKey: z
     .string()
-    .description("Device token issued by memoryd admin; env MEMORYD_API_KEY is also supported")
+    .description("DEPRECATED alias of token, kept for backward compatibility")
     .default("")
     .volatile(),
   requestTimeoutMs: z.natural().min(1000).max(120000).default(DEFAULT_CONFIG.requestTimeoutMs).volatile(),
@@ -63,6 +69,7 @@ export const Config = z.object({
 
 export interface MemorydPluginConfig {
   endpoint: string;
+  token: string;
   apiKey: string;
   requestTimeoutMs: number;
   searchLimit: number;
@@ -101,10 +108,17 @@ export function resolveConfig(
   if (unknownKeys.length) {
     throw new TypeError(`Unknown memoryd config option: ${unknownKeys.join(", ")}`);
   }
+  const token =
+    (flat.token as string) ||
+    (flat.apiKey as string) ||
+    env.MEMORYD_TOKEN ||
+    env.MEMORYD_API_KEY ||
+    "";
   const config = {
     ...DEFAULT_CONFIG,
     ...flat,
-    apiKey: (flat.apiKey as string) || env.MEMORYD_API_KEY || "",
+    token,
+    apiKey: token, // 兼容旧读法
     deviceName: (flat.deviceName as string) || defaultDeviceName(),
     tokenFile: expandHome((flat.tokenFile as string) || defaultUnder(".memoryd", "token")),
     fingerprintFile: expandHome(
