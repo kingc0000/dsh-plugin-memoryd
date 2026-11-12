@@ -77,6 +77,11 @@ class MemoryPromote(BaseModel):
     reason: str = ""
 
 
+class BulkDeleteRequest(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=1000)
+    hard: bool = False   # True=物理删除（含 FTS/关联项），默认软删除
+
+
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)
     scopes: Optional[list[str]] = None  # 缺省=该设备全部可读 scope

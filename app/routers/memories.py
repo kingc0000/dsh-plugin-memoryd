@@ -9,7 +9,7 @@ from ..auth import (
 )
 from ..config import settings
 from ..db import get_connection, now_iso, write_transaction
-from ..models import MemoryCreate, MemoryCreateResponse, MemoryPromote, MemoryUpdate, SearchRequest
+from ..models import BulkDeleteRequest, MemoryCreate, MemoryCreateResponse, MemoryPromote, MemoryUpdate, SearchRequest
 from ..search import bm25_search, build_match, index_memory, unindex_memory
 from .events import push_event
 
@@ -168,6 +168,54 @@ def delete_memory(mem_id: int, device: dict = Depends(get_current_device)):
         unindex_memory(tx, mem_id)
         audit(tx, device, "delete", row["scope"], row["scope_ref"], f"id={mem_id}")
     return {"ok": True, "deleted_id": mem_id}
+
+
+@router.post("/v1/memories:bulk-delete", tags=["memories"])
+def bulk_delete_memories(body: BulkDeleteRequest, device: dict = Depends(get_current_device)):
+    """批量删除：逐条权限检查，无权/不存在的 id 计入 skipped。默认软删。"""
+    conn = get_connection()
+    deleted = 0
+    skipped: list[int] = []
+    with write_transaction() as tx:
+        for mem_id in body.ids:
+            row = tx.execute(
+                "SELECT * FROM memories WHERE id=? AND deleted_at IS NULL", (mem_id,)
+            ).fetchone()
+            if row is None or not can_write(row["scope"], row["scope_ref"], device, conn):
+                skipped.append(mem_id)
+                continue
+            if body.hard:
+                # 物理删除：记忆行 + FTS 索引 + 指向它的提案引用
+                tx.execute("DELETE FROM memories WHERE id=?", (mem_id,))
+                tx.execute("DELETE FROM memory_fts WHERE rowid=?", (mem_id,))
+                tx.execute("DELETE FROM proposals WHERE memory_id=?", (mem_id,))
+            else:
+                tx.execute(
+                    "UPDATE memories SET deleted_at=? WHERE id=? AND deleted_at IS NULL",
+                    (now_iso(), mem_id),
+                )
+                unindex_memory(tx, mem_id)
+            audit(tx, device, "delete", row["scope"], row["scope_ref"],
+                  f"id={mem_id}" + (" hard" if body.hard else ""))
+            deleted += 1
+    return {"ok": True, "deleted": deleted, "skipped": skipped}
+
+
+@router.get("/v1/stats", tags=["admin"])
+def service_stats(device: dict = Depends(get_current_device)):
+    """管理台首页统计（一次请求替代 health + memories?limit=500 + proposals）。"""
+    conn = get_connection()
+    by_scope = {
+        r["scope"]: r["n"]
+        for r in conn.execute(
+            "SELECT scope, COUNT(*) AS n FROM memories "
+            "WHERE deleted_at IS NULL AND superseded_by IS NULL GROUP BY scope"
+        ).fetchall()
+    }
+    pending = conn.execute("SELECT COUNT(*) FROM proposals WHERE status='pending'").fetchone()[0]
+    devices = conn.execute("SELECT COUNT(*) FROM devices WHERE active=1").fetchone()[0]
+    return {"memories": sum(by_scope.values()), "by_scope": by_scope,
+            "pending_proposals": pending, "devices": devices}
 
 
 @router.post("/v1/memories:search", tags=["memories"])
